@@ -71,30 +71,10 @@ func part2(_ data: String) -> Int {
     let world = parseWorld(data)
     let start = world.first(where: { p in p.value == "^" })!.key
 
-    func scan() -> [V2] {
-        var seen: Set<V2> = Set()
-        var pos = start
-        var dir = V2(x: 0, y: -1)
-
-        while let c = world[pos + dir] {
-            if c == "#" {
-                dir *= V2.i
-            }
-            else {
-                pos += dir
-                seen.insert(pos)
-            }
-        }
-        return Array(seen)
-    }
-
-    func oracle(patch: V2) -> Bool {
+    func oracle(pos: V2, dir: V2, seen: Set<Pos>) -> Bool {
         var world = world
-        world[patch] = "#"
-        var seen: Set<Pos> = Set()
-        var pos = start
-        var dir = V2(x: 0, y: -1)
-
+        world[pos + dir] = "#"
+        var pos = pos, dir = dir, seen = seen
         while let c = world[pos + dir] {
             if c == "#" {
                 dir *= V2.i
@@ -112,10 +92,20 @@ func part2(_ data: String) -> Int {
     }
 
     var ans = 0
-    for p in scan() {
-        ans += oracle(patch: p) ? 1 : 0
-    }
+    var seen: Set<Pos> = Set()
+    var pos = start
+    var dir = V2(x: 0, y: -1)
 
+    while let c = world[pos + dir] {
+        if c == "#" {
+            dir *= V2.i
+        }
+        else {
+            pos += dir
+        }
+        ans += oracle(pos: pos, dir: dir, seen: seen) ? 1 : 0
+        seen.insert(Pos(pos: pos, dir: dir))
+    }
     return ans;
 }
 
