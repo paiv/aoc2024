@@ -58,6 +58,38 @@ def part2(data):
     return ans
 
 
+def part2(data):
+    lines = data.strip().splitlines()
+    grid = {(x+1j*y):c for y,row in enumerate(lines) for x,c in enumerate(row)}
+    start = next(p for p,c in grid.items() if c == '^')
+
+    def oracle(p, d, seen):
+        g = dict(grid)
+        g[p + d] = '#'
+        while (c := g.get(p + d)):
+            if c == '#':
+                d *= 1j
+            else:
+                p += d
+            k = (p, d)
+            if k in seen:
+                return True
+            seen.add(k)
+        return False
+
+    ans = 0
+    seen = set()
+    p, d = start, -1j
+    while (c := grid.get(p + d)):
+        if c == '#':
+            d *= 1j
+        else:
+            ans += oracle(p, d, set(seen))
+            p += d
+            seen.add((p, d))
+    return ans
+
+
 data = '''
 ....#.....
 .........#
