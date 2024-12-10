@@ -4,10 +4,10 @@ from collections import deque
 
 def part1(data):
     lines = data.strip().splitlines()
-    grid = {(y,x):int(c) for y,s in enumerate(lines)
+    grid = {(x + 1j*y):int(c) for y,s in enumerate(lines)
         for x,c in enumerate(s)}
     starts = [p for p,c in grid.items() if c == 0]
-    neib = [(0,1), (0,-1), (1,0), (-1,0)]
+    neib = [1, -1, 1j, -1j]
 
     ans = 0
     for s in starts:
@@ -18,9 +18,8 @@ def part1(data):
             if grid[pos] == 9:
                 ans += 1
                 continue
-            y,x = pos
-            for dy,dx in neib:
-                q = (y+dy, x+dx)
+            for d in neib:
+                q = pos + d
                 if (h := grid.get(q)) is not None:
                     if h - grid[pos] == 1:
                         if q not in seen:
@@ -31,10 +30,10 @@ def part1(data):
 
 def part2(data):
     lines = data.strip().splitlines()
-    grid = {(y,x):int(c) for y,s in enumerate(lines)
+    grid = {(x + 1j*y):int(c) for y,s in enumerate(lines)
         for x,c in enumerate(s)}
     starts = [p for p,c in grid.items() if c == 0]
-    neib = [(0,1), (0,-1), (1,0), (-1,0)]
+    neib = [1, -1, 1j, -1j]
 
     ans = 0
     for s in starts:
@@ -44,9 +43,8 @@ def part2(data):
             if grid[pos] == 9:
                 ans += 1
                 continue
-            y,x = pos
-            for dy,dx in neib:
-                q = (y+dy, x+dx)
+            for d in neib:
+                q = pos + d
                 if (h := grid.get(q)) is not None:
                     if h - grid[pos] == 1:
                         if q not in path:
