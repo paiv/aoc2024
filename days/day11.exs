@@ -27,10 +27,10 @@ defmodule Day11 do
     if rem(t, 2) == 0 do
       t = div(t, 2)
 
-      0..1
-      |> Enum.map(&String.slice(s, &1 * t, t))
-      |> Enum.map(&String.to_integer/1)
-      |> Enum.map(&{&1, n})
+      for i <- 0..1 do
+        x = String.to_integer(String.slice(s, i * t, t))
+        {x, n}
+      end
     else
       [{x * 2024, n}]
     end
