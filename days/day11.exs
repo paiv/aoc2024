@@ -21,15 +21,12 @@ defmodule Day11 do
   end
 
   defp split_stone({x, n}) do
-    s = to_string(x)
-    t = String.length(s)
+    s = Integer.digits(x)
+    t = length(s)
 
     if rem(t, 2) == 0 do
-      t = div(t, 2)
-
-      for i <- 0..1 do
-        x = String.to_integer(String.slice(s, i * t, t))
-        {x, n}
+      for x <- Stream.chunk_every(s, div(t, 2)) do
+        {Integer.undigits(x), n}
       end
     else
       [{x * 2024, n}]
