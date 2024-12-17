@@ -1,6 +1,6 @@
 // PriorityQueue.swift
 // author: paiv
-// https://github.com/paiv/swift-priorityqueue
+// https://github.com/paiv/priorityqueue-swift
 
 public struct PriorityQueue<Element> where Element:Comparable {
 
