@@ -28,12 +28,10 @@ func vm_run(_ prog: [Int], _ vm: Image) -> [Int] {
 
     func _arg(_ v: Int) -> Int {
         switch v {
-            case 0, 1, 2, 3:
-                return v
             case 4, 5, 6:
                 return regs[v - 4]
             default:
-                fatalError()
+                return v
         }
     }
 

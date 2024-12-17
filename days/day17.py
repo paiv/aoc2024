@@ -8,12 +8,10 @@ def vm_run(prog, regs):
 
     def _arg(v):
         match v:
-            case 0 | 1 | 2 | 3:
-                return v
             case 4 | 5 | 6:
                 return regs[v - 4]
             case _:
-                raise Exception()
+                return v
 
     def _set(r, v):
         regs[r - 4] = v
@@ -57,10 +55,11 @@ def vm_run(prog, regs):
 
 
 def disasm(prog, file=None):
+    rms = {4: 'ra', 5: 'rb', 6: 'rc'}
     ip = 0
     while 0 <= ip < len(prog):
         op, val = prog[ip:ip+2]
-        arg = val if val < 4 else ['ra', 'rb', 'rc'][val - 4]
+        arg = rms.get(val, val)
         print(f'{ip:03o}: {op} {val}  ', end='', file=file)
         match op:
             case 0:
