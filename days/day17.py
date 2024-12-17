@@ -21,16 +21,15 @@ def vm_run(prog, regs):
     ip = 0
     while 0 <= ip < pn:
         op, val = prog[ip:ip+2]
-        val = _arg(val)
         match op:
             case 0:
-                _set(ra, _arg(ra) >> val)
+                _set(ra, _arg(ra) >> _arg(val))
                 ip += 2
             case 1:
                 _set(rb, _arg(rb) ^ val)
                 ip += 2
             case 2:
-                _set(rb, val % 8)
+                _set(rb, _arg(val) % 8)
                 ip += 2
             case 3:
                 if _arg(ra):
@@ -41,13 +40,13 @@ def vm_run(prog, regs):
                 _set(rb, _arg(rb) ^ _arg(rc))
                 ip += 2
             case 5:
-                so.append(val % 8)
+                so.append(_arg(val) % 8)
                 ip += 2
             case 6:
-                _set(rb, _arg(ra) >> val)
+                _set(rb, _arg(ra) >> _arg(val))
                 ip += 2
             case 7:
-                _set(rc, _arg(ra) >> val)
+                _set(rc, _arg(ra) >> _arg(val))
                 ip += 2
             case _:
                 raise Exception(f'unhandled {op=!r} {arg=!r}')
@@ -55,37 +54,28 @@ def vm_run(prog, regs):
 
 
 def disasm(prog, file=None):
-    rms = {4: 'ra', 5: 'rb', 6: 'rc'}
-    ip = 0
-    while 0 <= ip < len(prog):
+    comb = {4: 'ra', 5: 'rb', 6: 'rc'}
+    for ip in range(0, len(prog), 2):
         op, val = prog[ip:ip+2]
-        arg = rms.get(val, val)
+        arg = comb.get(val, val)
         print(f'{ip:03o}: {op} {val}  ', end='', file=file)
         match op:
             case 0:
                 print(f'(adv) ra <<= {arg}', file=file)
-                ip += 2
             case 1:
-                print(f'(bxl) rb ^= {arg}', file=file)
-                ip += 2
+                print(f'(bxl) rb ^= {val}', file=file)
             case 2:
                 print(f'(bst) rb = {arg} % 8', file=file)
-                ip += 2
             case 3:
-                print(f'(jnz) {arg}', file=file)
-                ip += 2
+                print(f'(jnz) {val}', file=file)
             case 4:
                 print(f'(bxc) rb ^= rc', file=file)
-                ip += 2
             case 5:
                 print(f'(out) {arg} % 8', file=file)
-                ip += 2
             case 6:
                 print(f'(bdv) rb = ra << {arg}', file=file)
-                ip += 2
             case 7:
                 print(f'(cdv) rc = ra << {arg}', file=file)
-                ip += 2
             case _:
                 raise Exception(f'unhandled {op=!r} {val=!r}')
  
@@ -140,6 +130,43 @@ def handle_disasm(args):
     disasm(prog)
 
 
+def handle_sat(args):
+    import z3
+    data = args.file.read()
+    prog, _ = vm_parse(data)
+
+    opt = z3.Optimize()
+    s = z3.BitVec('s', len(prog) * 3)
+    ra, rb, rc = s, 0, 0
+
+    for x in prog:
+        for ip in range(0, len(prog), 2):
+            comb = {4: ra, 5: rb, 6: rc}
+            op, val = prog[ip:ip+2]
+            arg = comb.get(val, val)
+            match op:
+                case 0:
+                    ra = ra / (1 << arg)
+                case 1:
+                    rb = rb ^ val
+                case 2:
+                    rb = arg % 8
+                case 3:
+                    pass
+                case 4:
+                    rb = rb ^ rc
+                case 5:
+                    opt.add((arg % 8) == x)
+                case 6:
+                    rb = ra / (1 << arg)
+                case 7:
+                    rc = ra / (1 << arg)
+    opt.add(ra == 0)
+
+    assert opt.check() == z3.sat
+    print(opt.model().eval(s))
+
+
 def main(args):
     data = open('day17.in').read()
     ans = part1(data)
@@ -155,8 +182,12 @@ if __name__ == '__main__':
     subp = parser.add_subparsers()
 
     dasmp = subp.add_parser('disasm', aliases=['dasm', 'asm'])
-    dasmp.add_argument('file', type=argparse.FileType(), help='problem text')
+    dasmp.add_argument('file', nargs='?', type=argparse.FileType(), default='day17.in', help='problem text')
     dasmp.set_defaults(func=handle_disasm)
+
+    sat = subp.add_parser('z3', aliases=['sat'])
+    sat.add_argument('file', nargs='?', type=argparse.FileType(), default='day17.in', help='problem text')
+    sat.set_defaults(func=handle_sat)
 
     args = parser.parse_args()
     args.func(args)

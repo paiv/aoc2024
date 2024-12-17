@@ -41,17 +41,17 @@ func vm_run(_ prog: [Int], _ vm: Image) -> [Int] {
 
     while ip >= 0 && ip + 1 < pn {
         let op = prog[ip]
-        let val = _arg(prog[ip + 1])
+        let val = prog[ip + 1]
 
         switch op {
             case 0:
-                _set(ra, _arg(ra) >> val)
+                _set(ra, _arg(ra) >> _arg(val))
                 ip += 2
             case 1:
                 _set(rb, _arg(rb) ^ val)
                 ip += 2
             case 2:
-                _set(rb, val % 8)
+                _set(rb, _arg(val) % 8)
                 ip += 2
             case 3:
                 if _arg(ra) != 0 {
@@ -64,13 +64,13 @@ func vm_run(_ prog: [Int], _ vm: Image) -> [Int] {
                 _set(rb, _arg(rb) ^ _arg(rc))
                 ip += 2
             case 5:
-                output.append(val % 8)
+                output.append(_arg(val) % 8)
                 ip += 2
             case 6:
-                _set(rb, _arg(ra) >> val)
+                _set(rb, _arg(ra) >> _arg(val))
                 ip += 2
             case 7:
-                _set(rc, _arg(ra) >> val)
+                _set(rc, _arg(ra) >> _arg(val))
                 ip += 2
             default:
                 fatalError("unhandled op \(op) \(val)")
