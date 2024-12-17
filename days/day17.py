@@ -90,20 +90,20 @@ def disasm(prog, file=None):
             case _:
                 raise Exception(f'unhandled {op=!r} {val=!r}')
  
-
-def part1(data):
+def vm_parse(data):
     regs = list(map(int, re.findall(r'[ABC]: (\d+)', data)))
     prog = list(map(int, re.findall(r'\d+', data.split('Program:')[-1])))
+    return prog, regs
+
+
+def part1(data):
+    prog, regs = vm_parse(data)
     res = vm_run(prog, regs)
     ans = ','.join(map(str, res))
     return ans
 
 
 def part2(data):
-    regs = list(map(int, re.findall(r'[ABC]: (\d+)', data)))
-    prog = list(map(int, re.findall(r'\d+', data.split('Program:')[-1])))
-    #disasm(prog)
-
     def rev(prog, acc):
         if not prog:
             yield acc
@@ -114,6 +114,8 @@ def part2(data):
                 if (a % 8) ^ i == p:
                     yield from rev(prog[:-1], (acc << 3) | i)
 
+    prog, regs = vm_parse(data)
+    #disasm(prog)
     ans = None
     for ans in rev(prog, 0):
         regs[0] = ans
@@ -133,8 +135,29 @@ Program: 0,1,5,4,3,0
 assert part1(data) == '4,6,3,5,6,3,5,2,1,0'
 
 
-data = open('day17.in').read()
-ans = part1(data)
-print('part1:', ans)
-ans = part2(data)
-print('part2:', ans)
+def handle_disasm(args):
+    data = args.file.read()
+    prog, _ = vm_parse(data)
+    disasm(prog)
+
+
+def main(args):
+    data = open('day17.in').read()
+    ans = part1(data)
+    print('part1:', ans)
+    ans = part2(data)
+    print('part2:', ans)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.set_defaults(func=main)
+    subp = parser.add_subparsers()
+
+    dasmp = subp.add_parser('disasm', aliases=['dasm', 'asm'])
+    dasmp.add_argument('file', type=argparse.FileType(), help='problem text')
+    dasmp.set_defaults(func=handle_disasm)
+
+    args = parser.parse_args()
+    args.func(args)
