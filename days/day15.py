@@ -148,12 +148,11 @@ _palette = {
 
 def display(grid, size, pois=None, hist=None, inplace=True):
     w, h = size
-    yup = h + 2
+    yup = h + 3
     if hist: yup += 1
     up = f'\033[{yup}A'
     with io.StringIO() as so:
-        if inplace:
-            print(up, file=so)
+        print('\033[?25l' + (up if inplace else ''), file=so)
         if hist:
             f = len(hist) // 2 - 1
             a,b = hist[:f], hist[f+1:]
@@ -171,6 +170,7 @@ def display(grid, size, pois=None, hist=None, inplace=True):
                 s = _palette.get(c, c)
                 print(s, end='', file=so)
             print(file=so)
+        print('\033[?25h', file=so)
         print(so.getvalue())
 
 
@@ -216,6 +216,14 @@ assert part2(data) == 9021
 
 
 def handle_play(args):
+    import signal
+
+    soft_exit = False
+    def handler(signum, frame):
+        nonlocal soft_exit
+        soft_exit = True
+    signal.signal(signal.SIGINT, handler)
+
     fps = args.fps
     if fps <= 0:
         fps = 1
@@ -233,7 +241,10 @@ def handle_play(args):
     prog = '     ' + ''.join(mop[c] for c in prog) + '     '
     for i, (op, grid, pos) in enumerate(frames):
         display(grid, size, [pos], hist=prog[i:i+10], inplace=(i > 0))
+        if soft_exit: break
         time.sleep(1 / fps)
+        if i == 0:
+            time.sleep(1 / fps)
 
 
 def main(args):
