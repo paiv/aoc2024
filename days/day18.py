@@ -42,47 +42,52 @@ def part1(data, w=71, h=71, n=1024):
     return ans
 
 
+def find_path(grid, start, goal):
+    neib = [1, 1j, -1, -1j]
+    fringe = deque([(start,)])
+    seen = set()
+    while fringe:
+        path = fringe.popleft()
+        pos = path[-1]
+        if pos == goal:
+            return path
+        if pos in seen: continue
+        seen.add(pos)
+        for d in neib:
+            q = pos + d
+            if q in grid:
+                fringe.append(path + (q,))
+
+
 def part2(data, w=71, h=71):
     nums = list(map(int, re.findall(r'[+-]?\d+', data)))
     px = nums[0::2]
     py = nums[1::2]
+    start = 0j
+    goal = (w - 1) + 1j * (h - 1)
 
     stones = set()
     grid = {(x + 1j*y) for y in range(h) for x in range(w)}
 
+    path = find_path(grid, start, goal)
     for n in range(len(px)):
         x,y = px[n], py[n]
-        stones.add(x + 1j*y)
+        p = x + 1j * y
+        stones.add(p)
         grid -= stones
 
-        start = 0j
-        goal = (w - 1) + 1j * (h - 1)
-        neib = [1, 1j, -1, -1j]
-
-        fringe = deque([(0, start)])
-        seen = set()
-        res = None
-
-        while fringe:
-            dist, pos = fringe.popleft()
-            if pos == goal:
-                res = dist
-                break
-            if pos in seen: continue
-            seen.add(pos)
-            for d in neib:
-                q = pos + d
-                if q in grid:
-                    fringe.append((dist + 1, q))
-
-        if res is None:
-            return f'{x},{y}'
+        if p in path:
+            path = find_path(grid, start, goal)
+            if path is None:
+                return f'{x},{y}'
 
 
 _palette = {
     '.': '\033[30;49m.\033[0m',
     '#': '\033[35;49m#\033[0m',
     '@': '\033[33;49m@\033[0m',
+    '*': '\033[33;49m*\033[0m',
+    '%': '\033[30;41m%\033[0m',
 }
 
 
@@ -153,24 +158,9 @@ def part1_path(data, n=1024):
 
     start = 0j
     goal = (w-1) + 1j * (h-1)
-    neib = [1, 1j, -1, -1j]
+    path = find_path(grid, start, goal)
 
-    fringe = deque([(0, start, (start,))])
-    seen = set()
-    res = None
-
-    while fringe:
-        dist, pos, path = fringe.popleft()
-        if pos == goal:
-            res = path
-            break
-        if pos in seen: continue
-        seen.add(pos)
-        for d in neib:
-            q = pos + d
-            if q in grid:
-                fringe.append((dist + 1, q, path + (q,)))
-    return {p:'.' for p in grid}, (w, h), res
+    return {p:'.' for p in grid}, (w, h), path
 
 
 def handle_play(args):
@@ -202,11 +192,16 @@ def handle_play(args):
         nums = list(map(int, re.findall(r'[+-]?\d+', data)))
         px, py = nums[0::2], nums[1::2]
         w, h = 1 + max(px), 1 + max(py)
+        start = 0j
+        goal = (w-1) + 1j * (h-1)
 
         stones = set()
         grid = {(x + 1j*y):'.' for y in range(h) for x in range(w)}
 
-        display(grid, (w, h), t=0, inplace=False)
+        path = find_path(grid, start, goal)
+        last = path
+        pois = {p:'*' for p in path} if path else None
+        display(grid, (w, h), t=0, pois=pois, inplace=False)
         time.sleep(2 / fps)
 
         for i in range(len(px)):
@@ -214,8 +209,13 @@ def handle_play(args):
             p = x + 1j*y
             stones.add(p)
             grid.pop(p, None)
-            display(grid, (w, h), t=i+1)
-            if soft_exit: break
+
+            path = find_path(grid, start, goal)
+            pois = {p:'*' for p in path} if path else {p:'*' for p in last} | {p:'%'}
+            last = path
+            display(grid, (w, h), t=i+1, pois=pois)
+
+            if soft_exit or not path: break
             time.sleep(1 / fps)
 
 
