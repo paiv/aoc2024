@@ -194,12 +194,10 @@ _palette = {
 
 def display(grid, size, pois=None, inplace=True):
     w, h = size
-    yup = h + 1
+    yup = h + 3
     up = f'\033[{yup}A'
     with io.StringIO() as so:
-        print('\033[?25l', end='', file=so)
-        if inplace:
-            print(up, end='', file=so)
+        print('\033[?25l' + (up if inplace else ''), file=so)
         for y in range(h):
             for x in range(w):
                 p = (x + 1j*y)
@@ -209,11 +207,19 @@ def display(grid, size, pois=None, inplace=True):
                 s = _palette.get(c, c)
                 print(s, end='', file=so)
             print(file=so)
-        print('\033[?25h', end='', file=so)
+        print('\033[?25h', file=so)
         print(so.getvalue())
 
 
 def handle_play(args):
+    import signal
+
+    soft_exit = False
+    def handler(signum, frame):
+        nonlocal soft_exit
+        soft_exit = True
+    signal.signal(signal.SIGINT, handler)
+
     fps = args.fps
     if fps <= 0:
         fps = 1
@@ -226,7 +232,7 @@ def handle_play(args):
 
     if args.part == 1:
         paths = paths[:1]
-    for i, ps in enumerate(paths):
+    for i, ps in enumerate(paths, 1):
         ps[:0] = [None] * i * 2
 
     mop = {1:'>', -1:'<', 1j:'v', -1j:'^'}
@@ -235,7 +241,10 @@ def handle_play(args):
         for pos,dr in filter(None, ps):
             poi[pos] = mop[dr]
         display(grid, (w, h), poi, inplace=(i > 0))
+        if soft_exit: break
         time.sleep(1 / fps)
+        if i == 0:
+            time.sleep(1 / fps)
 
 
 def main(args):
