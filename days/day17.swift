@@ -42,36 +42,27 @@ func vm_run(_ prog: [Int], _ vm: Image) -> [Int] {
     while ip >= 0 && ip + 1 < pn {
         let op = prog[ip]
         let val = prog[ip + 1]
+        ip += 2
 
         switch op {
             case 0:
                 _set(ra, _arg(ra) >> _arg(val))
-                ip += 2
             case 1:
                 _set(rb, _arg(rb) ^ val)
-                ip += 2
             case 2:
                 _set(rb, _arg(val) % 8)
-                ip += 2
             case 3:
                 if _arg(ra) != 0 {
                     ip = val
                 }
-                else {
-                    ip += 2
-                }
             case 4:
                 _set(rb, _arg(rb) ^ _arg(rc))
-                ip += 2
             case 5:
                 output.append(_arg(val) % 8)
-                ip += 2
             case 6:
                 _set(rb, _arg(ra) >> _arg(val))
-                ip += 2
             case 7:
                 _set(rc, _arg(ra) >> _arg(val))
-                ip += 2
             default:
                 fatalError("unhandled op \(op) \(val)")
         }
@@ -91,32 +82,28 @@ func part1(_ data: String) -> String {
 
 func part2(_ data: String) -> Int {
     let (prog, vm) = vm_parse(data)
+    var ans = 1 << ((prog.count - 1) * 3)
 
-    func shx(_ v: Int, _ i: Int) -> Int {
-        let a = ((v << 3) | i) >> (i ^ 3)
-        return (a % 8) ^ i
-    }
+    while true {
+        var vm = vm
+        vm.ra = ans
+        let res = vm_run(prog, vm)
 
-    func reverse(_ k: Int, _ acc: Int) -> [Int] {
-        if k < 0 {
-            [acc]
+        if res == prog {
+            return Int(ans)
         }
-        else {
-            (0..<8).flatMap { i in
-                shx(acc, i) == prog[k] ?
-                    reverse(k - 1, (acc << 3) | i) : []
+
+        if res.count > prog.count {
+            fatalError()
+        }
+
+        for i in (0..<res.count).reversed() {
+            if res[i] != prog[i] {
+                ans += 1 << (i * 3)
+                break
             }
         }
     }
-
-    for ans in reverse(prog.count - 1, 0) {
-        var vm = vm
-        vm.ra = ans
-        if vm_run(prog, vm) == prog {
-            return ans
-        }
-    }
-    fatalError()
 }
 
 

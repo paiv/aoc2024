@@ -21,33 +21,25 @@ def vm_run(prog, regs):
     ip = 0
     while 0 <= ip < pn:
         op, val = prog[ip:ip+2]
+        ip += 2
         match op:
             case 0:
                 _set(ra, _arg(ra) >> _arg(val))
-                ip += 2
             case 1:
                 _set(rb, _arg(rb) ^ val)
-                ip += 2
             case 2:
                 _set(rb, _arg(val) % 8)
-                ip += 2
             case 3:
                 if _arg(ra):
                     ip = val
-                else:
-                    ip += 2
             case 4:
                 _set(rb, _arg(rb) ^ _arg(rc))
-                ip += 2
             case 5:
                 so.append(_arg(val) % 8)
-                ip += 2
             case 6:
                 _set(rb, _arg(ra) >> _arg(val))
-                ip += 2
             case 7:
                 _set(rc, _arg(ra) >> _arg(val))
-                ip += 2
             case _:
                 raise Exception(f'unhandled {op=!r} {arg=!r}')
     return so
@@ -104,14 +96,25 @@ def part2(data):
                     yield from rev(prog[:-1], (acc << 3) | i)
 
     prog, regs = vm_parse(data)
-    #disasm(prog)
-    ans = None
     for ans in rev(prog, 0):
-        regs[0] = ans
-        res = vm_run(prog, regs)
+        res = vm_run(prog, [ans, 0, 0])
         if res == prog:
+            return ans
+
+
+def part2(data):
+    prog, regs = vm_parse(data)
+    a = 1 << (len(prog) - 1) * 3
+    while True:
+        res = vm_run(prog, [a, 0, 0])
+        if res == prog:
+            return a
+        if len(res) > len(prog):
             break
-    return ans
+        for i in range(len(res))[::-1]:
+            if res[i] != prog[i]:
+                a += 1 << i * 3
+                break
 
 
 data = '''
@@ -163,6 +166,7 @@ def handle_sat(args):
                     rc = ra / (1 << arg)
     opt.add(ra == 0)
 
+    #opt.minimize(s)
     res = opt.check()
     assert res == z3.sat, repr(res)
     ans = opt.model().eval(s).as_long()
