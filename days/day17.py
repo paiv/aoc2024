@@ -163,12 +163,17 @@ def handle_sat(args):
                     rc = ra / (1 << arg)
     opt.add(ra == 0)
 
-    assert opt.check() == z3.sat
-    print(opt.model().eval(s))
+    res = opt.check()
+    assert res == z3.sat, repr(res)
+    ans = opt.model().eval(s).as_long()
+
+    assert vm_run(prog, [ans,0,0]) == prog
+    print(ans)
 
 
 def main(args):
-    data = open('day17.in').read()
+    fp = args.file if 'file' in args else open('day17.in')
+    data = fp.read()
     ans = part1(data)
     print('part1:', ans)
     ans = part2(data)
@@ -180,6 +185,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.set_defaults(func=main)
     subp = parser.add_subparsers()
+
+    filep = subp.add_parser('file')
+    filep.add_argument('file', nargs='?', type=argparse.FileType(), default='day17.in', help='problem text')
+    filep.set_defaults(func=main)
 
     dasmp = subp.add_parser('disasm', aliases=['dasm', 'asm'])
     dasmp.add_argument('file', nargs='?', type=argparse.FileType(), default='day17.in', help='problem text')
