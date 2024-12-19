@@ -53,7 +53,7 @@ def disasm(prog, file=None):
         print(f'{ip:03o}: {op} {val}  ', end='', file=file)
         match op:
             case 0:
-                print(f'(adv) ra <<= {arg}', file=file)
+                print(f'(adv) ra >>= {arg}', file=file)
             case 1:
                 print(f'(bxl) rb ^= {val}', file=file)
             case 2:
@@ -65,9 +65,9 @@ def disasm(prog, file=None):
             case 5:
                 print(f'(out) {arg} % 8', file=file)
             case 6:
-                print(f'(bdv) rb = ra << {arg}', file=file)
+                print(f'(bdv) rb = ra >> {arg}', file=file)
             case 7:
-                print(f'(cdv) rc = ra << {arg}', file=file)
+                print(f'(cdv) rc = ra >> {arg}', file=file)
             case _:
                 raise Exception(f'unhandled {op=!r} {val=!r}')
  
