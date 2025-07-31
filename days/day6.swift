@@ -95,6 +95,7 @@ func part2(_ data: String) -> Int {
     var seen: Set<Pos> = Set()
     var pos = start
     var dir = V2(x: 0, y: -1)
+    var path: Set<V2> = [pos]
 
     while let c = world[pos + dir] {
         if c == "#" {
@@ -103,7 +104,10 @@ func part2(_ data: String) -> Int {
         else {
             pos += dir
         }
-        ans += oracle(pos: pos, dir: dir, seen: seen) ? 1 : 0
+        if !path.contains(pos + dir) {
+            ans += oracle(pos: pos, dir: dir, seen: seen) ? 1 : 0
+            path.insert(pos + dir)
+        }
         seen.insert(Pos(pos: pos, dir: dir))
     }
     return ans;

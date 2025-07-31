@@ -80,12 +80,15 @@ def part2(data):
     ans = 0
     seen = set()
     p, d = start, -1j
+    path = {p}
     while (c := grid.get(p + d)):
         if c == '#':
             d *= 1j
         else:
-            ans += oracle(p, d, set(seen))
             p += d
+            if p not in path:
+                ans += oracle(p - d, d, set(seen))
+                path.add(p)
             seen.add((p, d))
     return ans
 
