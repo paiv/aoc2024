@@ -2,4 +2,5 @@
 !*.py
 !*.swift
 !*.exs
+!*.jl
 !*.ml
