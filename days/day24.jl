@@ -21,7 +21,7 @@ end
 function _display(grid)
     gates = collect(grid)
     ops = Dict((&)=>"and", (|)=>"or", (⊻)=>"xor")
-    names = ["""_$i [label = "$(ops[op])", color = blue]"""
+    names = ["""_$i [label = "$(ops[op])", color="#405081" fontcolor="#cfdbff"]"""
         for (i,(z,(op,x,y))) in enumerate(gates)]
     wires = [
         ["_$i -> $z" for (i,(z,(op,x,y))) in enumerate(gates)]
@@ -31,6 +31,9 @@ function _display(grid)
     edges = join(wires, '\n')
     println("""
     digraph {
+    bgcolor = "#202124"
+    node [color = "#5F626B", fontcolor = "#f1f3f4"]
+    edge [color = "#5F626B"]
     $nodes
     $edges
     }
